@@ -1,0 +1,54 @@
+{{- if .Values.vault.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: seeder-configmap
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "sso.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+data:
+  seed.sh: |-
+    #!/bin/bash
+
+    KCADM=/opt/eap/bin/kcadm.sh
+
+    # Source Vault vars
+    source /vault/secrets/vars_sso && source /vault/secrets/vars_seed
+    
+    # Configure truststore
+    $KCADM config truststore /etc/pki/ca-trust/extracted/java/cacerts --trustpass changeit 
+    if [[ $? -ne 0 ]]; then
+      echo "Cannot load truststore"  
+      exit 99
+    fi
+    # Configure credentials
+    $KCADM config credentials --server https://{{ template "sso.fullname" . }}.{{ .Release.Namespace }}.svc:8443/auth --realm master --user $SSO_ADMIN_USERNAME --password $SSO_ADMIN_PASSWORD 
+    if [[ $? -ne 0 ]]; then
+      echo "Cannot authenticate against {{ template "sso.fullname" . }}.{{ .Release.Namespace }}"  
+      exit 99
+    fi
+    
+    # Create new REALM
+    ($KCADM get realms/$REALM && echo "Realm $REALM already created") || ($KCADM create realms -s realm=$REALM -s enabled=true && echo "Realm $REALM successfully created")
+
+    # Create new Client
+    cid=$($KCADM create clients -r $REALM -s clientId=$CLIENT_ID -s enabled=true -s clientAuthenticatorType=client-secret -s secret=$CLIENT_SECRET -i) 
+    if [[ $? -eq 0 ]]; then
+      # Create Client role
+      echo "Client $CLIENT_ID successfully created"
+      ($KCADM create clients/$CID/roles -r $REALM -s name=$ROLE_NAME -s "description=$ROLE_DESCRIPTION" && echo "Client $CLIENT_ID successfully created") || echo "Client $CLIENT_ID already created"
+    fi
+
+    # Create Realm role
+    ($KCADM get roles/$ROLE_NAME -r $REALM && echo "Role $ROLE_NAME already created") || ($KCADM create roles -r $REALM -s name=$ROLE_NAME -s "description=$ROLE_DESCRIPTION" && echo "Role $ROLE_NAME successfully created")
+
+    # Create user
+    ($KCADM get users -r $REALM -q username=$USER_NAME && echo "User $USER_NAME already created") || ($KCADM create users -r $REALM -s username=$USER_NAME -s enabled=true && $KCADM set-password -r $REALM --username $USER_NAME --new-password $USER_PASSWORD && echo "User $USER_NAME successfully created") 
+    
+    # Add role to user
+    ($KCADM get-roles -r $REALM --uusername $USER_NAME --effective | grep $ROLE_NAME && echo "Role $ROLE_NAME already assigned to $USER_NAME") || ($KCADM add-roles --uusername $USER_NAME --rolename $ROLE_NAME -r $REALM && echo "Role $ROLE_NAME successfully assigned to $USER_NAME")
+
+{{- end }}

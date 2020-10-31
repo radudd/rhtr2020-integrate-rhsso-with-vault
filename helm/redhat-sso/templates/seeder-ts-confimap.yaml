@@ -1,0 +1,9 @@
+{{- if .Values.vault.enabled }}
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: custom-ca
+  annotations:
+    service.beta.openshift.io/inject-cabundle: 'true'
+    "helm.sh/hook": post-install,post-upgrade
+{{- end }}

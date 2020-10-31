@@ -1,0 +1,31 @@
+url: sso-rhtr.apps.ocp.bdmsky.net
+fullnameOverride: sso
+
+vault:
+  enabled: true
+
+# not required if using Vault
+sso: 
+  username: admin
+  password: password
+  realm: test
+  serviceUser: testuser
+  servicePassword: password
+# not required if using Vault
+
+db:
+  address: postgresql-db
+  port: 5432
+  database: sso
+# not required if using Vault
+  user: postgres
+  password: password
+# not required if using Vault
+
+images:
+  sso: 
+    fqdn: registry.redhat.io/rh-sso-7/sso74-openshift-rhel8
+    tag: 7.4
+  helper:
+    fqdn: registry.redhat.io/openshift4/ose-tools-rhel7
+    tag: v4.5

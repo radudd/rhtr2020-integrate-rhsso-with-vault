@@ -1,0 +1,63 @@
+{{- if .Values.vault.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: seeder-job
+  namespace: {{ .Release.Namespace }}
+  labels:
+    app.kubernetes.io/name: {{ include "sso.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+  annotations:
+    "helm.sh/hook": post-install,post-upgrade
+spec:
+  template:
+    metadata:
+      name: seeder-job
+      annotations:
+        # CustomPKI annotations
+        custompki.openshift.io/inject-jks: "true"
+        custompki.openshift.io/configmap-key: service-ca.crt
+        # Vault annotations
+        vault.hashicorp.com/role: sso
+        vault.hashicorp.com/ca-key: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
+        vault.hashicorp.com/agent-pre-populate-only: "true"
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/agent-inject-secret-vars_seed: "sso/seeder"
+        vault.hashicorp.com/agent-inject-template-vars_seed: |
+          {{`{{ with secret "sso/seeder" -}}
+            {{ range $k, $v := .Data.data }}
+                export {{ $k }}={{ $v }}
+            {{ end }}
+          {{- end }}`}}
+        vault.hashicorp.com/agent-inject-secret-vars_sso: "sso/vars"
+        vault.hashicorp.com/agent-inject-template-vars_sso: |
+          {{`{{ with secret "sso/vars" -}}
+            {{ range $k, $v := .Data.data }}
+                export {{ $k }}={{ $v }}
+            {{ end }}
+          {{- end }}`}}
+    spec:
+      initContainers:
+        - name: wait-for-sso
+          image: {{ .Values.images.helper.fqdn }}:{{ .Values.images.helper.tag }}
+          command:
+            - sh
+            - '-c'
+            - while true; do nc -vz {{ template "sso.fullname" . }} 8443 && break; echo "Not Ready"; sleep 5; done
+      containers:
+        - name: seeder
+          image: {{ .Values.images.sso.fqdn }}:{{ .Values.images.sso.tag }}
+          command:
+            - sh
+            - '-c'
+            - /scripts/seed.sh
+          volumeMounts:
+            - mountPath: /scripts
+              name: seeder-config
+      restartPolicy: Never
+      volumes:
+       - name: seeder-config
+         configMap:
+            name: seeder-configmap
+            defaultMode: 0755
+{{- end }}

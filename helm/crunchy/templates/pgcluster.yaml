@@ -1,0 +1,91 @@
+apiVersion: crunchydata.com/v1
+kind: Pgcluster
+metadata:
+  annotations:
+    current-primary: "{{ .Values.global.dbClusterName }}"
+  labels:
+    autofail: 'true'
+    crunchy-pgbadger: 'false'
+    crunchy-pgha-scope: "{{ .Values.global.dbClusterName }}"
+    crunchy-postgres-exporter: 'false'
+    current-primary: "{{ .Values.global.dbClusterName }}"
+    deployment-name: "{{ .Values.global.dbClusterName }}"
+    name: "{{ .Values.global.dbClusterName }}"
+    pg-cluster: "{{ .Values.global.dbClusterName }}"
+    pg-pod-anti-affinity: ''
+    pgo-backrest: 'true'
+    pgo-version: 4.5.0
+    pgouser: pgoadmin
+    primary: 'true'
+  name: "{{ .Values.global.dbClusterName }}"
+  namespace: "{{ .Release.Namespace }}"
+spec:
+  ArchiveStorage:
+    accessmode: ''
+    matchLabels: ''
+    name: ''
+    size: ''
+    storageclass: ''
+    storagetype: ''
+    supplementalgroups: ''
+  BackrestStorage:
+    accessmode: ReadWriteOnce
+    matchLabels: ''
+    name: ''
+    size: 300M
+    storageclass: "{{ .Values.storageClass }}"
+    storagetype: dynamic
+    supplementalgroups: ''
+  PrimaryStorage:
+    accessmode: ReadWriteOnce
+    matchLabels: ''
+    name: "{{ .Values.storageClass }}"
+    size: 1G
+    storageclass: "{{ .Values.storageClass }}"
+    storagetype: dynamic
+    supplementalgroups: ''
+    #ReplicaStorage:
+    #  accessmode: ReadWriteOnce
+    #  matchLabels: ''
+    #  name: ''
+    #  size: 300M
+    #  storageclass: "{{ .Values.storageClass }}"
+    #  storagetype: dynamic
+    #  supplementalgroups: ''
+  #backrestResources: {}
+  ccpimage: crunchy-postgres-ha
+  ccpimagetag: centos7-12.4-4.5.0
+  clustername: "{{ .Values.global.dbClusterName }}"
+  customconfig: ''
+  database: "{{ .Values.global.dbName }}"
+  exporterport: '9187'
+  name: "{{ .Values.global.dbClusterName }}"
+  namespace: "{{ .Release.Namespace }}"
+  pgBouncer:
+    replicas: 0
+    resources: {}
+  pgbadgerport: '10000'
+  podPodAntiAffinity:
+    default: preferred
+    pgBackRest: preferred
+    pgBouncer: preferred
+  policies: ''
+  port: '5432'
+  replicas: '0'
+  primarysecretname: "{{ .Values.global.dbClusterName }}-primaryuser-secret"
+  rootsecretname: "{{ .Values.global.dbClusterName }}-postgres-secret"
+  usersecretname: "{{ .Values.global.dbClusterName }}-user-secret"
+  secretfrom: ''
+  shutdown: false
+  standby: false
+  status: ''
+  syncReplication: null
+  tablespaceMounts: {}
+  tls: {}
+  user: "{{ .Values.global.dbUser }}"
+  userlabels:
+    crunchy-postgres-exporter: 'false'
+    pg-pod-anti-affinity: ''
+    pgo-backrest: 'true'
+    pgo-version: 4.5.0
+    pgouser: pgoadmin

@@ -1,0 +1,16 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: {{ template "sso.fullname" . }}
+  labels:
+    app.kubernetes.io/name: {{ include "sso.name" . }}
+    app.kubernetes.io/instance: {{ .Release.Name }}
+spec:
+  host: {{ .Values.url }}
+  to:
+    kind: Service
+    name: {{ template "sso.fullname" . }}
+    weight: 100
+  tls:
+    insecureEdgeTerminationPolicy: Redirect
+    termination: Reencrypt

@@ -1,0 +1,57 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    pg-cluster: "{{ .Values.global.dbClusterName }}"
+    pgha-config: "false"
+    vendor: crunchydata
+  name: "{{ .Values.global.dbClusterName }}-pgha-config"
+data:
+  init: "false"
+  postgresql-dcs-config: |
+    postgresql:
+      parameters:
+        archive_command: source /opt/cpm/bin/pgbackrest/pgbackrest-set-env.sh && pgbackrest
+          archive-push "%p"
+        archive_mode: true
+        archive_timeout: 60
+        log_directory: pg_log
+        log_min_duration_statement: 60000
+        max_wal_senders: 6
+        shared_buffers: 128MB
+        shared_preload_libraries: pgaudit.so,pg_stat_statements.so
+        temp_buffers: 8MB
+        unix_socket_directories: /tmp,/crunchyadm
+        wal_level: logical
+        work_mem: 4MB
+      recovery_conf:
+        restore_command: source /opt/cpm/bin/pgbackrest/pgbackrest-set-env.sh && pgbackrest
+          archive-get %f "%p"
+      use_pg_rewind: true
+  postgresql-local-config: |
+    postgresql:
+      parameters:
+        log_statement: ddl
+      callbacks:
+        on_role_change: /opt/cpm/bin/callbacks/pgha-on-role-change.sh
+      create_replica_methods:
+      - pgbackrest
+      - basebackup
+      pg_hba:
+      - local all postgres peer
+      - local all crunchyadm peer
+      - host replication primaryuser 0.0.0.0/0 md5
+      - host all primaryuser 0.0.0.0/0 reject
+      - host all all 0.0.0.0/0 md5
+      pgbackrest:
+        command: /opt/cpm/bin/pgbackrest/pgbackrest-create-replica.sh
+        keep_data: true
+        no_params: true
+      pgbackrest_standby:
+        command: /opt/cpm/bin/pgbackrest/pgbackrest-create-replica.sh
+        keep_data: true
+        no_master: 1
+        no_params: true
+      pgpass: /tmp/.pgpass
+      remove_data_directory_on_rewind_failure: true
+      use_unix_socket: true
