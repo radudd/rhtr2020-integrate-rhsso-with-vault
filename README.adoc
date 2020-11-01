@@ -1,6 +1,6 @@
 ## About
 
-This chart can be used to deploy Keycloak
+This chart can be used to deploy Red Hat SSO
 
 * Integration with CrunchyData Postgres
 * Integration with Vault for fetching secrets like:
