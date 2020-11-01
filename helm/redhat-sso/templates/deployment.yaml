@@ -70,7 +70,8 @@ spec:
         - "source /vault/secrets/vars_db && source /vault/secrets/vars_sso && /opt/eap/bin/openshift-launch.sh"
         {{- end }}
         ports:
-          - containerPort: 8080
+          - name: http
+            containerPort: 8080
             protocol: TCP
           - name: https
             containerPort: 8443
@@ -93,21 +94,6 @@ spec:
           valueFrom:
             secretKeyRef:
               key: ssoPassword
-              name: {{ template "sso.fullname" . }}-secrets
-        - name: SSO_REALM
-          valueFrom:
-            secretKeyRef:
-              key: ssoRealm
-              name: {{ template "sso.fullname" . }}-secrets
-        - name: SSO_SERVICE_USERNAME
-          valueFrom:
-            secretKeyRef:
-              key: ssoServiceUsername
-              name: {{ template "sso.fullname" . }}-secrets
-        - name: SSO_SERVICE_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              key: ssoServicePassword
               name: {{ template "sso.fullname" . }}-secrets
         - name: DB_USER
           valueFrom:

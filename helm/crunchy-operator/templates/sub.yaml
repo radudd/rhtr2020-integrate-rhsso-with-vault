@@ -6,7 +6,7 @@ metadata:
 spec:
   channel: stable
   installPlanApproval: Automatic
-  name: crunchy-postgres-operator
-  source: certified-operators
+  name: postgresql
+  source: community-operators
   sourceNamespace: openshift-marketplace
   startingCSV: postgresoperator.{{ .Values.version }}

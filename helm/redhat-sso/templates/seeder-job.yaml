@@ -50,7 +50,7 @@ spec:
           command:
             - sh
             - '-c'
-            - /scripts/seed.sh
+            - source /vault/secrets/vars_sso && source /vault/secrets/vars_seed && /scripts/seed.sh
           volumeMounts:
             - mountPath: /scripts
               name: seeder-config

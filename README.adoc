@@ -8,10 +8,17 @@ This chart can be used to deploy Keycloak
 ** dynamic db secrets 
 ** user credentials for a minimalistic bootstrap
 ** client secrets for a minimalistic bootstrap
+* For the seeding part a separate K8s job will be used. This will connect to Red Hat SSO API and will run the seeding
 * Flag for enable/disable Vault integration. If Vault disabled, use Kubernetes secrets
 * Use OpenShift CA signer for generating SSL certificates
 
 ## To Do before deployment
+
+* Define Namespace
+
+```
+export NS=rhtr2020-rhsso-vault-crunchy
+```
 
 * Install Crunchy operator
 
@@ -24,7 +31,7 @@ helm install crunchy-operator helm/crunchy-operator
 First generate some dummy config for PG Backrest
 
 ```
-helm/crunchy/scripts/ssh-generate.sh
+helm/crunchy/scripts/crunchy-ssh-generate.sh
 ```
 
 Then deploy a Crunchy instance
@@ -34,13 +41,17 @@ helm install crunchy helm/crunchy
 ```
 
 * Configure Vault
-** enable dynamic secrets for Postgres
-** enable kv2 engine for seeding RH-SSO and admin credentials
-** create policy and roles
-** label namespace to enable vault injection
+
+** Enable database engine and dynamic secrets for Postgres
 
 ```
-scripts/configure-vault.sh
+scripts/vault-configure-db.sh
+```
+
+** Enable kv2 engine and create policy and roles 
+
+```
+scripts/vault-policy-and-role.sh
 ```
 
 * Seed Vault for admin credentials
@@ -50,7 +61,9 @@ echo -n '{
   "SSO_ADMIN_PASSWORD": "password",
   "SSO_ADMIN_USERNAME": "admin"
 }' > admin.json 
+```
 
+```
 vault kv put sso/vars @admin.json
 ```
 
@@ -58,25 +71,36 @@ vault kv put sso/vars @admin.json
 ```
 echo -n '{
   "CLIENT_ID": "test-client",
-  "CLIENT_SECRET": "xxx"
+  "CLIENT_SECRET": "xxx",
   "REALM": "rhtr",
-  "ROLE_DESCRIPTION": "Can edit stuff",
+  "ROLE_DESCRIPTION": "Editor",
   "ROLE_NAME": "edit",
   "USER_NAME": "user",
   "USER_PASSWORD": "password"
 }' > seed.json 
+```
 
-vault kv put sso/vars @seed.json
+```
+vault kv put sso/seeder @seed.json
+```
 
 * Label namespace for Vault injection
 
 ```
-oc label namespace rhtr2020-vault-rhsso vault.hashicorp.com/agent-webhook=enabled
+oc label namespace $NS vault.hashicorp.com/agent-webhook=enabled
 ```
 
 ## Install
 
-* Then proceed with the installation after customizing `values.yaml`
+* Seeder job will need to connect to Red Hat SSO API. Red Hat SSO for this part listens on TLS only and its certificates are signed by OpenShift CA Signer. For the seeder to be able to connect, it will need to trust a JKS version of OpenShift CA signer. In this tutorial I will use the [custom-ca-injector](github.com/radudd/custom-ca-injector) for the jks injection. However, this can be also achieved using a binary ConifgMap or an init Container.
+
+```
+oc label namespace $NS inject=custom-pki
+```
+
+The rest is already prepared, i.e. the job is annotated accordingly and the pem configmap containing the trusted CA is part of the templates.
+
+* Proceed with the installation after customizing `values.yaml`
 
 ```
 helm install sso helm/redhat-sso
