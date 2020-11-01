@@ -25,7 +25,6 @@ spec:
         {{- if .Values.vault.enabled }}
         vault.hashicorp.com/role: sso
         vault.hashicorp.com/ca-key: /var/run/secrets/kubernetes.io/serviceaccount/service-ca.crt
-        vault.hashicorp.com/agent-pre-populate-only: "true"
         vault.hashicorp.com/agent-inject: "true"
         vault.hashicorp.com/agent-inject-secret-vars_db: "database/creds/postgresql-role"
         vault.hashicorp.com/agent-inject-template-vars_db: |
