@@ -40,15 +40,7 @@ Then deploy a Crunchy instance
 helm install crunchy helm/crunchy 
 ```
 
-* Configure Vault
-
-** Enable database engine and dynamic secrets for Postgres
-
-```
-scripts/vault-configure-db.sh
-```
-
-** Enable kv2 engine and create policy and roles 
+* Enable kv2 engine and create policy and roles in Vault
 
 ```
 scripts/vault-policy-and-role.sh
@@ -59,7 +51,9 @@ scripts/vault-policy-and-role.sh
 ```
 echo -n '{
   "SSO_ADMIN_PASSWORD": "password",
-  "SSO_ADMIN_USERNAME": "admin"
+  "SSO_ADMIN_USERNAME": "admin",
+  "DB_USERNAME": "ssouser",
+  "DB_PASSWORD": "password"
 }' > admin.json 
 ```
 
