@@ -14,9 +14,6 @@ cat <<EOF > policy.hcl
 path "sso/*" {
   capabilities = ["read", "list"]
 }
-path "database/creds/*" {
-  capabilities = ["read", "list"]
-}
 EOF
 
 vault policy write sso-policy policy.hcl

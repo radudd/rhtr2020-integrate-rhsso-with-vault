@@ -4,7 +4,7 @@
 export NS=rhtr2020-rhsso-vault-crunchy
 # export VAULT_* variables
 # export DB_* variables
-export DB_HOST="postgresql-db.${NS}"
+export DB_HOST="sso-postgresql.${NS}"
 export DB_DATABASE="sso"
 
 vault secrets enable database
@@ -16,10 +16,12 @@ vault write database/config/postgresql \
      username="postgres" \
      password="password"
 
-vault write database/roles/postgresql-role \
-    db_name=postgresql \
-    creation_statements="CREATE ROLE \"{{name}}\" WITH LOGIN PASSWORD '{{password}}' VALID UNTIL '{{expiration}}'; \
-	GRANT ALL PRIVILEGES ON DATABASE ${DB_DATABASE} TO \"{{name}}\";" \
-    default_ttl="1h" \
-    max_ttl="24h"
+cat <<EOF>rotation.sql
+ALTER USER "{{name}}" WITH PASSWORD '{{password}}';
+EOF
 
+vault write database/static-roles/postgresql-role \
+        db_name=postgresql \
+        rotation_statements=@rotation.sql \
+        username="ssouser" \
+        rotation_period=86400

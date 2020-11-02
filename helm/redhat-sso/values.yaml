@@ -14,11 +14,11 @@ sso:
 # not required if using Vault
 
 db:
-  address: postgresql-db
+  address: sso-postgresql
   port: 5432
   database: sso
 # not required if using Vault
-  user: postgres
+  user: redhatsso
   password: password
 # not required if using Vault
 

@@ -45,15 +45,15 @@ spec:
             - '-c'
             - while true; do nc -vz {{ template "sso.fullname" . }} 8443 && break; echo "Not Ready"; sleep 5; done
       containers:
-        - name: seeder
-          image: {{ .Values.images.sso.fqdn }}:{{ .Values.images.sso.tag }}
-          command:
-            - sh
-            - '-c'
-            - source /vault/secrets/vars_sso && source /vault/secrets/vars_seed && /scripts/seed.sh
-          volumeMounts:
-            - mountPath: /scripts
-              name: seeder-config
+      - name: seeder
+        image: {{ .Values.images.sso.fqdn }}:{{ .Values.images.sso.tag }}
+        command:
+          - sh
+          - '-c'
+          - source /vault/secrets/vars_sso && source /vault/secrets/vars_seed && /scripts/seed.sh
+        volumeMounts:
+          - mountPath: /scripts
+            name: seeder-config
       restartPolicy: Never
       volumes:
        - name: seeder-config

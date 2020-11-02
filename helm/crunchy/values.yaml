@@ -1,6 +1,6 @@
 global:
-  dbClusterName: postgresql-db
-  dbUser: redhatsso
+  dbClusterName: sso-postgresql
+  dbUser: ssouser
   dbPassword: password
   dbName: sso
 
